@@ -90,7 +90,7 @@ class GoldStandardWidget:
         goldStandardFormLayout.addRow("Moving Volume(MRI): ", self.gsMovingVolumeSelector)
 
         # 手动配准控制
-        transformLabel = qt.QLabel("手动配准:")
+        transformLabel = qt.QLabel("手动配准(请提前使用Volume Rendering体渲染模块将Fixed Volume与Moving Volume渲染成三维图像):")
         transformLabel.setStyleSheet("font-weight: bold; margin-top: 2px;")
         goldStandardFormLayout.addRow(transformLabel)
 
