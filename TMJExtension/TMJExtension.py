@@ -107,7 +107,7 @@ class TMJExtensionWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         devFormLayout = qt.QFormLayout(devCollapsibleButton)
 
         # 重载按钮
-        reloadButton = qt.QPushButton("🔄 热重载子模块")
+        reloadButton = qt.QPushButton("🔄 重载")
         reloadButton.toolTip = "重新加载所有子模块的代码，无需重启 Slicer"
         reloadButton.connect('clicked(bool)', self.onReloadModules)
         devFormLayout.addRow(reloadButton)
