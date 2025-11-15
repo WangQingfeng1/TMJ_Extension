@@ -21,6 +21,8 @@ from DataManager.data_manager_widget import DataManagerWidget
 from DataManager.data_manager_logic import DataManagerLogic
 from GoldStandardSet.gold_standard_widget import GoldStandardWidget
 from GoldStandardSet.gold_standard_logic import GoldStandardLogic
+from CoarseRegistration.coarse_registration_widget import CoarseRegistrationWidget
+from CoarseRegistration.coarse_registration_logic import CoarseRegistrationLogic
 
 
 #
@@ -40,6 +42,7 @@ class TMJExtension(ScriptedLoadableModule):
 这是一个用于TMJ(颞下颌关节)分析的3D Slicer插件。
 Data Manager 模块用于导入、管理和导出医学影像数据，保留原始 HU/强度信息。
 Gold Standard Set 模块用于手动配准和金标准设置。
+Coarse Registration 模块用于基于基准点的粗配准。
 """
         self.parent.acknowledgementText = """
 This module was developed for TMJ research.
@@ -61,6 +64,7 @@ class TMJExtensionWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         # 子模块引用
         self.dataManagerWidget = None
         self.goldStandardWidget = None
+        self.coarseRegistrationWidget = None
 
     def setup(self):
         """设置主界面"""
@@ -74,6 +78,13 @@ class TMJExtensionWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
 
         # 创建 Gold Standard Set 模块
         self.goldStandardWidget = GoldStandardWidget(
+            parent=self.layout,
+            logCallback=self.addLog,
+            getMainFolderNameCallback=self.dataManagerWidget.getMainFolderName
+        )
+
+        # 创建 Coarse Registration 模块
+        self.coarseRegistrationWidget = CoarseRegistrationWidget(
             parent=self.layout,
             logCallback=self.addLog,
             getMainFolderNameCallback=self.dataManagerWidget.getMainFolderName
@@ -134,6 +145,7 @@ class TMJExtensionLogic(ScriptedLoadableModuleLogic):
         ScriptedLoadableModuleLogic.__init__(self)
         self.dataManagerLogic = DataManagerLogic()
         self.goldStandardLogic = GoldStandardLogic()
+        self.coarseRegistrationLogic = CoarseRegistrationLogic()
 
 
 #
