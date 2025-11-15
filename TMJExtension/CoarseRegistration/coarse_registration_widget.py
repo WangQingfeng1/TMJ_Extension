@@ -54,17 +54,8 @@ class CoarseRegistrationWidget:
         self.parent.addWidget(coarseRegCollapsibleButton)
         coarseRegFormLayout = qt.QFormLayout(coarseRegCollapsibleButton)
 
-        # 模块说明
-        descLabel = qt.QLabel(
-            "基于基准点的粗配准，避免后续精配准时因初始位置差异过大导致失败。\n"
-            "使用相似变换（平移+旋转+统一缩放）将 Moving Volume 粗略对齐到 Fixed Volume。"
-        )
-        descLabel.setWordWrap(True)
-        descLabel.setStyleSheet("color: #555; font-style: italic; margin-bottom: 10px;")
-        coarseRegFormLayout.addRow(descLabel)
-
         # 从场景中选择数据
-        selectLabel = qt.QLabel("选择配准数据 (通常从 Data Manager 场景子文件夹中选择):")
+        selectLabel = qt.QLabel("选择需要配准的数据，一般为Data Manager创建的Fixed_Volume和Moving_Volume:")
         selectLabel.setStyleSheet("font-weight: bold;")
         coarseRegFormLayout.addRow(selectLabel)
 
@@ -78,7 +69,7 @@ class CoarseRegistrationWidget:
         self.crFixedVolumeSelector.showHidden = False
         self.crFixedVolumeSelector.setMRMLScene(slicer.mrmlScene)
         self.crFixedVolumeSelector.setToolTip("选择 Fixed Volume (CBCT)")
-        coarseRegFormLayout.addRow("Fixed Volume (CBCT): ", self.crFixedVolumeSelector)
+        coarseRegFormLayout.addRow("Fixed Volume(CBCT): ", self.crFixedVolumeSelector)
 
         # Moving Volume 选择器
         self.crMovingVolumeSelector = slicer.qMRMLNodeComboBox()
@@ -90,7 +81,7 @@ class CoarseRegistrationWidget:
         self.crMovingVolumeSelector.showHidden = False
         self.crMovingVolumeSelector.setMRMLScene(slicer.mrmlScene)
         self.crMovingVolumeSelector.setToolTip("选择 Moving Volume (MRI)")
-        coarseRegFormLayout.addRow("Moving Volume (MRI): ", self.crMovingVolumeSelector)
+        coarseRegFormLayout.addRow("Moving Volume(MRI): ", self.crMovingVolumeSelector)
 
         # 基准点选择
         fiducialsLabel = qt.QLabel("选择或创建基准点:")
@@ -106,9 +97,9 @@ class CoarseRegistrationWidget:
         self.crFixedFiducialsSelector.noneEnabled = False
         self.crFixedFiducialsSelector.showHidden = False
         self.crFixedFiducialsSelector.setMRMLScene(slicer.mrmlScene)
-        self.crFixedFiducialsSelector.setToolTip("Fixed Volume 上的基准点 (至少3个)")
+        self.crFixedFiducialsSelector.setToolTip("Fixed Volume上的基准点 (至少3个)")
         self.crFixedFiducialsSelector.baseName = "CoarseReg_Fixed_Points"
-        coarseRegFormLayout.addRow("Fixed 基准点: ", self.crFixedFiducialsSelector)
+        coarseRegFormLayout.addRow("Fixed基准点: ", self.crFixedFiducialsSelector)
 
         # Moving Fiducials
         self.crMovingFiducialsSelector = slicer.qMRMLNodeComboBox()
@@ -119,21 +110,21 @@ class CoarseRegistrationWidget:
         self.crMovingFiducialsSelector.noneEnabled = False
         self.crMovingFiducialsSelector.showHidden = False
         self.crMovingFiducialsSelector.setMRMLScene(slicer.mrmlScene)
-        self.crMovingFiducialsSelector.setToolTip("Moving Volume 上的基准点 (至少3个)")
+        self.crMovingFiducialsSelector.setToolTip("Moving Volume上的基准点 (至少3个)")
         self.crMovingFiducialsSelector.baseName = "CoarseReg_Moving_Points"
-        coarseRegFormLayout.addRow("Moving 基准点: ", self.crMovingFiducialsSelector)
+        coarseRegFormLayout.addRow("Moving基准点: ", self.crMovingFiducialsSelector)
 
         # 基准点操作按钮
         fiducialButtonsLayout = qt.QHBoxLayout()
         
-        self.placeFixedButton = qt.QPushButton("放置 Fixed 基准点")
-        self.placeFixedButton.toolTip = "在 Fixed Volume 上标注解剖标志点"
+        self.placeFixedButton = qt.QPushButton("放置Fixed基准点")
+        self.placeFixedButton.toolTip = "在固定图像上标注解剖标志点"
         self.placeFixedButton.checkable = True
         self.placeFixedButton.connect('toggled(bool)', self.onPlaceFixed)
         fiducialButtonsLayout.addWidget(self.placeFixedButton)
 
-        self.placeMovingButton = qt.QPushButton("放置 Moving 基准点")
-        self.placeMovingButton.toolTip = "在 Moving Volume 上标注对应的解剖标志点"
+        self.placeMovingButton = qt.QPushButton("放置Moving基准点")
+        self.placeMovingButton.toolTip = "在浮动图像上标注对应的解剖标志点"
         self.placeMovingButton.checkable = True
         self.placeMovingButton.connect('toggled(bool)', self.onPlaceMoving)
         fiducialButtonsLayout.addWidget(self.placeMovingButton)
@@ -157,10 +148,9 @@ class CoarseRegistrationWidget:
         coarseRegFormLayout.addRow("基准点对数量:", self.pointPairsTable)
 
         # 提示信息
-        hintLabel = qt.QLabel("💡 提示: 分别在 Fixed 和 Moving Volume 上选择对应的解剖标志点\n"
-                             "步骤: 1) 先在 Fixed 上标注点  2) 再在 Moving 上标注对应的点  3) 确保点数相同且顺序对应")
+        hintLabel = qt.QLabel("提示:请分别在固定图像和浮动图像上选择对应的解剖标志点，确保点数相同且顺序对应")
         hintLabel.setWordWrap(True)
-        hintLabel.setStyleSheet("color: #2196F3; margin: 5px 0px;")
+        hintLabel.setStyleSheet("color: #E11A1A; margin: 5px 0px;")
         coarseRegFormLayout.addRow(hintLabel)
 
         # 粗配准按钮
@@ -183,7 +173,7 @@ class CoarseRegistrationWidget:
         self.crModuleFolderNameEdit = qt.QLineEdit()
         self.crModuleFolderNameEdit.text = "Coarse Registration"
         self.crModuleFolderNameEdit.setToolTip("Coarse Registration 模块在总场景文件夹下的子文件夹名称")
-        coarseRegFormLayout.addRow("场景子文件夹: ", self.crModuleFolderNameEdit)
+        coarseRegFormLayout.addRow("Coarse Registration场景子文件夹:", self.crModuleFolderNameEdit)
 
         self.saveResultButton = qt.QPushButton("保存粗配准结果到场景")
         self.saveResultButton.toolTip = "将粗配准后的体积、变换矩阵和基准点保存到场景文件夹"

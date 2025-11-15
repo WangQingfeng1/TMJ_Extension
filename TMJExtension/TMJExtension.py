@@ -70,6 +70,9 @@ class TMJExtensionWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         """设置主界面"""
         ScriptedLoadableModuleWidget.setup(self)
 
+        # 开发者工具区域（用于重载）
+        self.setupDeveloperTools()
+
         # 创建 Data Manager 模块
         self.dataManagerWidget = DataManagerWidget(
             parent=self.layout,
@@ -95,6 +98,92 @@ class TMJExtensionWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
 
         # 添加垂直间距
         self.layout.addStretch(1)
+    def setupDeveloperTools(self):
+        """设置开发者工具区域"""
+        devCollapsibleButton = ctk.ctkCollapsibleButton()
+        devCollapsibleButton.text = "🔧 开发者工具"
+        devCollapsibleButton.collapsed = True
+        self.layout.addWidget(devCollapsibleButton)
+        devFormLayout = qt.QFormLayout(devCollapsibleButton)
+
+        # 重载按钮
+        reloadButton = qt.QPushButton("🔄 热重载子模块")
+        reloadButton.toolTip = "重新加载所有子模块的代码，无需重启 Slicer"
+        reloadButton.connect('clicked(bool)', self.onReloadModules)
+        devFormLayout.addRow(reloadButton)
+
+        # 状态标签
+        self.reloadStatusLabel = qt.QLabel("")
+        devFormLayout.addRow(self.reloadStatusLabel)
+
+    def onReloadModules(self):
+        """热重载所有子模块"""
+        import importlib
+        import shutil
+        import gc
+        
+        self.addLog("=" * 50)
+        self.addLog("🔥 开始热重载...")
+        
+        try:
+            # 步骤1: 清除 __pycache__
+            module_path = os.path.dirname(os.path.abspath(__file__))
+            cache_cleared = 0
+            
+            for root, dirs, files in os.walk(module_path):
+                if '__pycache__' in dirs:
+                    cache_dir = os.path.join(root, '__pycache__')
+                    try:
+                        shutil.rmtree(cache_dir)
+                        cache_cleared += 1
+                    except:
+                        pass
+            
+            if cache_cleared > 0:
+                self.addLog(f"✓ 清除了 {cache_cleared} 个缓存目录")
+            
+            # 步骤2: 重载所有子模块
+            import DataManager.data_manager_logic as dm_logic
+            import DataManager.data_manager_widget as dm_widget
+            import GoldStandardSet.gold_standard_logic as gs_logic
+            import GoldStandardSet.gold_standard_widget as gs_widget
+            import CoarseRegistration.coarse_registration_logic as cr_logic
+            import CoarseRegistration.coarse_registration_widget as cr_widget
+            
+            modules_to_reload = [
+                ('DataManager.Logic', dm_logic),
+                ('DataManager.Widget', dm_widget),
+                ('GoldStandardSet.Logic', gs_logic),
+                ('GoldStandardSet.Widget', gs_widget),
+                ('CoarseRegistration.Logic', cr_logic),
+                ('CoarseRegistration.Widget', cr_widget),
+            ]
+            
+            for name, module in modules_to_reload:
+                try:
+                    importlib.reload(module)
+                    self.addLog(f"✓ {name}")
+                except Exception as e:
+                    self.addLog(f"✗ {name}: {str(e)}")
+            
+            # 步骤3: 垃圾回收
+            gc.collect()
+            
+            # 步骤4: 使用 Slicer API 重载主模块
+            slicer.util.reloadScriptedModule("TMJExtension")
+            
+            self.addLog("✅ 热重载完成!")
+            self.addLog("📌 请切换到其他模块再切回来查看更新")
+            self.addLog("=" * 50)
+            
+            self.reloadStatusLabel.setText("✅ 重载成功 - 请切换模块")
+            
+        except Exception as e:
+            error_msg = f"重载失败: {str(e)}"
+            self.addLog(f"❌ {error_msg}")
+            self.reloadStatusLabel.setText(f"❌ {error_msg}")
+            import traceback
+            self.addLog(traceback.format_exc())
 
     def setupLogArea(self):
         """设置日志区域"""
