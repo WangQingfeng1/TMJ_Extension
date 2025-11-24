@@ -28,6 +28,7 @@ class DataManagerWidget:
         # UI 组件引用
         self.fixedVolumeSelector = None
         self.movingVolumeSelector = None
+        self.roiVolumeSelectors = {}  # 存储4个ROI volume选择器
         self.mainFolderNameEdit = None
         self.moduleFolderNameEdit = None
         self.loadDataButton = None
@@ -74,26 +75,82 @@ class DataManagerWidget:
         self.movingVolumeSelector.showHidden = False
         self.movingVolumeSelector.showChildNodeTypes = False
         self.movingVolumeSelector.setMRMLScene(slicer.mrmlScene)
-        self.movingVolumeSelector.setToolTip("选择浮动图像 (MRI)")
+        self.movingVolumeSelector.setToolTip("选择整体头颅浮动图像 (MRI)")
         movingVolumeLayout.addWidget(self.movingVolumeSelector)
-        dataManagerFormLayout.addRow("Moving Volume(MRI): ", movingVolumeLayout)
+        dataManagerFormLayout.addRow("Moving Volume(整体MRI): ", movingVolumeLayout)
+
+        # ROI高分辨率MRI选择器
+        roiLabel = qt.QLabel("高分辨率TMJ ROI浮动图像（可选）:")
+        roiLabel.setStyleSheet("font-weight: bold; margin-top: 10px;")
+        dataManagerFormLayout.addRow(roiLabel)
+        
+        # 4个ROI volume选择器
+        roiTypes = [
+            ("右斜矢", "Moving_Volume_右斜矢"),
+            ("左斜矢", "Moving_Volume_左斜矢"),
+            ("右斜冠", "Moving_Volume_右斜冠"),
+            ("左斜冠", "Moving_Volume_左斜冠")
+        ]
+        
+        for displayName, internalName in roiTypes:
+            roiVolumeLayout = qt.QVBoxLayout()
+            roiSelector = slicer.qMRMLNodeComboBox()
+            roiSelector.nodeTypes = ["vtkMRMLScalarVolumeNode"]
+            roiSelector.selectNodeUponCreation = False
+            roiSelector.addEnabled = False
+            roiSelector.removeEnabled = False
+            roiSelector.noneEnabled = True
+            roiSelector.showHidden = False
+            roiSelector.showChildNodeTypes = False
+            roiSelector.setMRMLScene(slicer.mrmlScene)
+            roiSelector.setToolTip(f"选择{displayName}位高分辨率MRI（可选）")
+            roiVolumeLayout.addWidget(roiSelector)
+            dataManagerFormLayout.addRow(f"{displayName}位: ", roiVolumeLayout)
+            
+            # 保存到字典中
+            self.roiVolumeSelectors[internalName] = roiSelector
 
         # 或者导入新文件
         importLabel = qt.QLabel("或者从文件夹导入新的DICOM文件:")
-        importLabel.setStyleSheet("font-weight: bold; margin-top: 2px;")
+        importLabel.setStyleSheet("font-weight: bold; margin-top: 10px;")
         dataManagerFormLayout.addRow(importLabel)
 
         importButtonsLayout = qt.QHBoxLayout()
         self.loadFixedButton = qt.QPushButton("加载 Fixed Volume")
-        self.loadFixedButton.toolTip = "从文件导入 Fixed Volume"
+        self.loadFixedButton.toolTip = "从文件导入 Fixed Volume (CBCT)"
         self.loadFixedButton.connect('clicked(bool)', self.onLoadFixedVolume)
         importButtonsLayout.addWidget(self.loadFixedButton)
 
         self.loadMovingButton = qt.QPushButton("加载 Moving Volume")
-        self.loadMovingButton.toolTip = "从文件导入 Moving Volume"
+        self.loadMovingButton.toolTip = "从文件导入 Moving Volume (整体MRI)"
         self.loadMovingButton.connect('clicked(bool)', self.onLoadMovingVolume)
         importButtonsLayout.addWidget(self.loadMovingButton)
         dataManagerFormLayout.addRow(importButtonsLayout)
+        
+        # ROI MRI导入按钮
+        roiImportButtonsLayout1 = qt.QHBoxLayout()
+        self.loadRightSagButton = qt.QPushButton("加载右斜矢Moving Volume")
+        self.loadRightSagButton.toolTip = "从文件导入右斜矢位高分辨率MRI"
+        self.loadRightSagButton.connect('clicked(bool)', lambda: self.onLoadROIVolume("ROI_Right_Sagittal", "右斜矢"))
+        roiImportButtonsLayout1.addWidget(self.loadRightSagButton)
+        
+        self.loadLeftSagButton = qt.QPushButton("加载左斜矢Moving Volume")
+        self.loadLeftSagButton.toolTip = "从文件导入左斜矢位高分辨率MRI"
+        self.loadLeftSagButton.connect('clicked(bool)', lambda: self.onLoadROIVolume("ROI_Left_Sagittal", "左斜矢"))
+        roiImportButtonsLayout1.addWidget(self.loadLeftSagButton)
+        dataManagerFormLayout.addRow(roiImportButtonsLayout1)
+        
+        roiImportButtonsLayout2 = qt.QHBoxLayout()
+        self.loadRightCorButton = qt.QPushButton("加载右斜冠Moving Volume")
+        self.loadRightCorButton.toolTip = "从文件导入右斜冠位高分辨率MRI"
+        self.loadRightCorButton.connect('clicked(bool)', lambda: self.onLoadROIVolume("ROI_Right_Coronal", "右斜冠"))
+        roiImportButtonsLayout2.addWidget(self.loadRightCorButton)
+        
+        self.loadLeftCorButton = qt.QPushButton("加载左斜冠Moving Volume")
+        self.loadLeftCorButton.toolTip = "从文件导入左斜冠位高分辨率MRI"
+        self.loadLeftCorButton.connect('clicked(bool)', lambda: self.onLoadROIVolume("ROI_Left_Coronal", "左斜冠"))
+        roiImportButtonsLayout2.addWidget(self.loadLeftCorButton)
+        dataManagerFormLayout.addRow(roiImportButtonsLayout2)
 
         # 配准流程总文件夹名称
         folderLabel = qt.QLabel("场景文件夹设置:")
@@ -161,13 +218,13 @@ class DataManagerWidget:
         try:
             filePath = qt.QFileDialog.getOpenFileName(
                 None, 
-                "选择 Moving Volume", 
+                "选择 Moving Volume (整体MRI)", 
                 "", 
                 "Medical Images (*.nrrd *.nii *.nii.gz *.dcm *.mha *.mhd);;All Files (*)"
             )
             if filePath:
                 self.logCallback(f"正在加载 Moving Volume: {filePath}")
-                volumeNode = self.logic.loadVolume(filePath, "moving_volume")
+                volumeNode = self.logic.loadVolume(filePath, "Moving_Volume")
                 if volumeNode:
                     self.movingVolumeSelector.setCurrentNode(volumeNode)
                     self.logCallback(f"✓ Moving Volume 加载成功: {volumeNode.GetName()}")
@@ -175,6 +232,26 @@ class DataManagerWidget:
                     self.statusLabel.setStyleSheet("color: green;")
         except Exception as e:
             self.showError(f"加载 Moving Volume 失败: {str(e)}")
+    
+    def onLoadROIVolume(self, internalName, displayName):
+        """加载 ROI Volume"""
+        try:
+            filePath = qt.QFileDialog.getOpenFileName(
+                None, 
+                f"选择{displayName}位高分辨率MRI", 
+                "", 
+                "Medical Images (*.nrrd *.nii *.nii.gz *.dcm *.mha *.mhd);;All Files (*)"
+            )
+            if filePath:
+                self.logCallback(f"正在加载{displayName}位MRI: {filePath}")
+                volumeNode = self.logic.loadVolume(filePath, internalName)
+                if volumeNode:
+                    self.roiVolumeSelectors[internalName].setCurrentNode(volumeNode)
+                    self.logCallback(f"✓ {displayName}位MRI加载成功: {volumeNode.GetName()}")
+                    self.statusLabel.text = f"状态: {displayName}位已加载"
+                    self.statusLabel.setStyleSheet("color: green;")
+        except Exception as e:
+            self.showError(f"加载{displayName}位MRI失败: {str(e)}")
 
     def onLoadData(self):
         """加载配准数据到场景文件夹"""
@@ -199,16 +276,31 @@ class DataManagerWidget:
                 self.showError("请输入模块子文件夹名称")
                 return
             
+            # 收集所有选择的ROI volumes
+            roiVolumes = {}
+            for internalName, selector in self.roiVolumeSelectors.items():
+                node = selector.currentNode()
+                if node:
+                    roiVolumes[internalName] = node
+            
             self.logCallback(f"正在创建配准流程结构...")
             self.logCallback(f"  总文件夹: {mainFolderName}")
             self.logCallback(f"  Data Manager子文件夹: {moduleFolderName}")
+            if roiVolumes:
+                self.logCallback(f"  包含 {len(roiVolumes)} 个ROI高分辨率MRI图像")
             
             # 调用 Logic 加载数据到场景
-            success = self.logic.loadDataToScene(fixedNode, movingNode, mainFolderName, moduleFolderName)
+            success = self.logic.loadDataToScene(
+                fixedNode, movingNode, mainFolderName, moduleFolderName, roiVolumes
+            )
             
             if success:
                 self.logCallback(f"✓ 配准数据已组织到场景文件夹")
                 self.logCallback(f"  路径: {mainFolderName}/{moduleFolderName}")
+                if roiVolumes:
+                    for name in roiVolumes.keys():
+                        displayName = self._getDisplayName(name)
+                        self.logCallback(f"  ✓ {displayName}位已添加")
                 self.statusLabel.text = "状态: 配准数据已加载"
                 self.statusLabel.setStyleSheet("color: green;")
             else:
@@ -216,6 +308,16 @@ class DataManagerWidget:
                 
         except Exception as e:
             self.showError(f"加载配准数据失败: {str(e)}")
+    
+    def _getDisplayName(self, internalName):
+        """将内部名称转换为显示名称"""
+        nameMap = {
+            "ROI_Moving_Volume_右斜矢": "右斜矢",
+            "ROI_Moving_Volume_左斜矢": "左斜矢",
+            "ROI_Moving_Volume_右斜冠": "右斜冠",
+            "ROI_Moving_Volume_左斜冠": "左斜冠"
+        }
+        return nameMap.get(internalName, internalName)
 
     def updateButtonStates(self):
         """更新按钮状态"""

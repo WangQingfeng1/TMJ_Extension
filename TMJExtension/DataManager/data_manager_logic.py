@@ -65,7 +65,7 @@ class DataManagerLogic:
             self.log(f"加载体积时出错: {str(e)}")
             raise
 
-    def loadDataToScene(self, fixedVolume, movingVolume, mainFolderName, moduleFolderName):
+    def loadDataToScene(self, fixedVolume, movingVolume, mainFolderName, moduleFolderName, roiVolumes=None):
         """
         将配准数据加载到场景文件夹中(两层结构)
         
@@ -73,6 +73,7 @@ class DataManagerLogic:
         :param movingVolume: Moving volume 节点
         :param mainFolderName: 配准流程总文件夹名称
         :param moduleFolderName: 模块子文件夹名称
+        :param roiVolumes: ROI高分辨率MRI字典 {internalName: volumeNode}
         :return: 成功状态
         """
         try:
@@ -102,6 +103,13 @@ class DataManagerLogic:
             if movingVolume:
                 movingCopy = self._createVolumeInFolder(movingVolume, "Moving_Volume", shNode, moduleFolderItemID)
                 self.log(f"✓ Moving Volume 已添加到 {moduleFolderName}")
+            
+            # 将 ROI Volumes 复制到模块子文件夹中
+            if roiVolumes:
+                for internalName, roiVolume in roiVolumes.items():
+                    if roiVolume:
+                        roiCopy = self._createVolumeInFolder(roiVolume, internalName, shNode, moduleFolderItemID)
+                        self.log(f"✓ {internalName} 已添加到 {moduleFolderName}")
             
             return True
             

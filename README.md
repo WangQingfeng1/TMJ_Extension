@@ -1,10 +1,10 @@
-# TMJ Extension - Data Manager
+# TMJ Extension
 
-这是一个用于3D Slicer的TMJ(颞下颌关节)分析扩展插件,第一个模块是 **Data Manager(数据管理器)**。
+这是一个用于3D Slicer的TMJ(颞下颌关节)分析扩展插件，包含多个模块用于医学影像配准和分析。
 
 ## 功能特性
 
-### Data Manager 模块
+### 1. Data Manager 模块
 
 Data Manager 提供简单的配准数据组织功能:
 
@@ -13,8 +13,32 @@ Data Manager 提供简单的配准数据组织功能:
 - ✅ **场景文件夹管理**: 在场景层次结构中创建文件夹来组织配准数据
 - ✅ **保留原始数据**: 不进行重采样,保留原始 spacing/direction/origin
 - ✅ **保留原始强度**: CT 数据保留 HU 值,MR 数据保留原始强度
-- ✅ **CT/MR 提示**: 提供选择提示,无强制验证
-- ✅ **错误处理与日志**: 详细的日志记录和错误提示
+
+### 2. Gold Standard Set 模块
+
+手动配准和金标准设置:
+
+- ✅ **手动配准**: 使用相似变换进行交互式手动配准
+- ✅ **标注点管理**: 在配准后的图像上标注对应点对
+- ✅ **金标准保存**: 保存手动配准结果作为金标准参考
+
+### 3. Coarse Registration 模块
+
+基于基准点的粗配准:
+
+- ✅ **基准点选择**: 在 Fixed 和 Moving Volume 上选择对应的基准点
+- ✅ **自动配准**: 基于基准点对自动计算相似变换
+- ✅ **配准评估**: 提供配准精度评估
+- ✅ **初始对齐**: 为后续精配准提供良好的初始位置
+
+### 4. ROI Mask Set 模块
+
+生成颞下颌关节ROI区域的掩膜:
+
+- ✅ **自动生成掩膜**: 根据高分辨率ROI浮动图像的物理范围自动生成固定图像的ROI掩膜
+- ✅ **膨胀处理**: 对掩膜进行可调膨胀，防止范围过于严格
+- ✅ **精细配准准备**: 为后续基于ROI的精细配准提供掩膜约束
+- ✅ **支持局部高分辨率**: 适用于整体图像分辨率较低但局部ROI有高分辨率扫描的场景
 
 ## 重要说明
 
@@ -55,80 +79,16 @@ cmake --build .
 
 ## 使用方法
 
-### 1. 加载数据
+详细的使用说明请查看 [USAGE_GUIDE.md](USAGE_GUIDE.md)
 
-**选项 A: 选择已加载的体积**
-- 从 "Fixed Volume" 下拉菜单选择参考图像
-- 从 "Moving Volume" 下拉菜单选择待配准图像
+### 工作流程建议
 
-**选项 B: 导入新文件**
-- 点击 "加载 Fixed Volume" 按钮导入参考图像
-- 点击 "加载 Moving Volume" 按钮导入待配准图像
-
-### 2. 配置输出
-
-- **场景文件夹名称**: 在 3D Slicer 场景层次结构中创建的文件夹名称,用于组织管理体积节点
-- **输出文件夹名称**: 默认自动生成带时间戳的名称,也可自定义
-- **输出目录**: 选择要保存数据的磁盘目录
-- **导出格式**: 选择 NRRD 或 NIfTI (.nii.gz)
-
-### 3. 导出数据
-
-- 点击 "导出数据" 按钮
-- 系统会:
-  - **在场景中**: 创建一个文件夹节点,并将体积副本放入其中进行管理
-  - **在磁盘上**: 在指定目录创建文件夹并保存:
-    - `fixed_volume.nrrd` (或 .nii.gz) - Fixed Volume
-    - `moving_volume.nrrd` (或 .nii.gz) - Moving Volume
-    - `metadata.json` - 完整的元数据信息
-
-### 4. 查看日志
-
-- 展开 "日志与错误信息" 区域
-- 查看详细的操作日志和错误信息
-- 点击 "清除日志" 清空日志内容
-
-## 输出文件说明
-
-### 体积文件
-
-保留原始的医学影像数据:
-- **CT 数据**: 保留 HU (Hounsfield Unit) 值
-- **MR 数据**: 保留原始强度值
-- **空间信息**: 保留原始 spacing, origin, direction
-
-### metadata.json 示例
-
-```json
-{
-  "export_time": "2025-10-21 14:30:00",
-  "file_format": "nrrd",
-  "resampled": false,
-  "scene_folder": "TMJ_Registration_20251021_143000",
-  "volumes": {
-    "fixed": {
-      "name": "fixed_volume",
-      "data_type": "CT",
-      "dimensions": [512, 512, 200],
-      "spacing": [0.5, 0.5, 1.0],
-      "origin": [0.0, 0.0, 0.0],
-      "direction": [[1, 0, 0], [0, 1, 0], [0, 0, 1]],
-      "scalar_type": "short",
-      "number_of_components": 1,
-      "intensity_statistics": {
-        "min": -1024.0,
-        "max": 3071.0,
-        "mean": -150.5,
-        "std": 450.2,
-        "median": -200.0
-      },
-      "resampled": false,
-      "notes": "Original HU values preserved"
-    },
-    "moving": { ... }
-  }
-}
-```
+1. **Data Manager**: 加载和组织配准数据
+2. **Coarse Registration**: 使用基准点进行粗配准（推荐先做）
+3. **ROI Mask Set**: 切换到高分辨率局部MRI，生成ROI掩膜
+4. **Gold Standard Set**: 手动精细配准设置金标准（用于评估）
+5. **（后续模块）**: 基于互信息的自动精配准（在ROI掩膜约束下）
+6. **（后续模块）**: 配准精度评估和可视化
 
 ## 项目结构
 
@@ -137,15 +97,30 @@ TMJ_Extension/
 ├── CMakeLists.txt                      # 主CMake配置文件
 ├── TMJExtension.s4ext                  # Slicer扩展描述文件
 ├── README.md                           # 本文件
+├── USAGE_GUIDE.md                      # 详细使用指南
 ├── .gitignore                          # Git忽略文件配置
 └── TMJExtension/                       # 模块文件夹
     ├── CMakeLists.txt                  # 模块CMake配置
-    ├── TMJExtension.py                 # 主Python脚本(核心代码)
+    ├── TMJExtension.py                 # 主Python脚本（模块集成）
+    ├── DataManager/                    # Data Manager 模块
+    │   ├── __init__.py
+    │   ├── data_manager_logic.py
+    │   └── data_manager_widget.py
+    ├── GoldStandardSet/                # Gold Standard Set 模块
+    │   ├── __init__.py
+    │   ├── gold_standard_logic.py
+    │   └── gold_standard_widget.py
+    ├── CoarseRegistration/             # Coarse Registration 模块
+    │   ├── __init__.py
+    │   ├── coarse_registration_logic.py
+    │   └── coarse_registration_widget.py
+    ├── ROIMaskSet/                     # ROI Mask Set 模块
+    │   ├── __init__.py
+    │   ├── roi_mask_set_logic.py
+    │   └── roi_mask_set_widget.py
     └── Resources/
-        ├── Icons/
-        │   └── TMJExtension.png        # 模块图标
-        └── UI/
-            └── TMJExtension.ui         # Qt用户界面文件
+        └── Icons/
+            └── TMJExtension.png        # 模块图标
 ```
 
 ## 技术细节
@@ -167,10 +142,11 @@ TMJ_Extension/
 
 ## 下一步开发计划
 
-- [ ] 配准模块
+- [ ] 基于互信息的精细配准模块（支持ROI掩膜约束）
+- [ ] 配准精度评估模块
 - [ ] 分割模块
 - [ ] 测量与分析模块
-- [ ] 可视化工具
+- [ ] 高级可视化工具
 
 ## 故障排除
 

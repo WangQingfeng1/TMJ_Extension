@@ -23,6 +23,8 @@ from GoldStandardSet.gold_standard_widget import GoldStandardWidget
 from GoldStandardSet.gold_standard_logic import GoldStandardLogic
 from CoarseRegistration.coarse_registration_widget import CoarseRegistrationWidget
 from CoarseRegistration.coarse_registration_logic import CoarseRegistrationLogic
+from ROIMaskSet.roi_mask_set_widget import ROIMaskSetWidget
+from ROIMaskSet.roi_mask_set_logic import ROIMaskSetLogic
 
 
 #
@@ -43,6 +45,7 @@ class TMJExtension(ScriptedLoadableModule):
 Data Manager 模块用于导入、管理和导出医学影像数据，保留原始 HU/强度信息。
 Gold Standard Set 模块用于手动配准和金标准设置。
 Coarse Registration 模块用于基于基准点的粗配准。
+ROI Mask Set 模块用于生成颞下颌关节ROI区域的掩膜。
 """
         self.parent.acknowledgementText = """
 This module was developed for TMJ research.
@@ -65,6 +68,7 @@ class TMJExtensionWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         self.dataManagerWidget = None
         self.goldStandardWidget = None
         self.coarseRegistrationWidget = None
+        self.roiMaskSetWidget = None
 
     def setup(self):
         """设置主界面"""
@@ -93,6 +97,13 @@ class TMJExtensionWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
             getMainFolderNameCallback=self.dataManagerWidget.getMainFolderName
         )
 
+        # 创建 ROI Mask Set 模块
+        self.roiMaskSetWidget = ROIMaskSetWidget(
+            parent=self.layout,
+            logCallback=self.addLog,
+            getMainFolderNameCallback=self.dataManagerWidget.getMainFolderName
+        )
+
         # 日志区域
         self.setupLogArea()
 
@@ -107,7 +118,7 @@ class TMJExtensionWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         devFormLayout = qt.QFormLayout(devCollapsibleButton)
 
         # 重载按钮
-        reloadButton = qt.QPushButton("🔄 热重载子模块")
+        reloadButton = qt.QPushButton("🔄 重载")
         reloadButton.toolTip = "重新加载所有子模块的代码，无需重启 Slicer"
         reloadButton.connect('clicked(bool)', self.onReloadModules)
         devFormLayout.addRow(reloadButton)
@@ -149,6 +160,8 @@ class TMJExtensionWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
             import GoldStandardSet.gold_standard_widget as gs_widget
             import CoarseRegistration.coarse_registration_logic as cr_logic
             import CoarseRegistration.coarse_registration_widget as cr_widget
+            import ROIMaskSet.roi_mask_set_logic as rm_logic
+            import ROIMaskSet.roi_mask_set_widget as rm_widget
             
             modules_to_reload = [
                 ('DataManager.Logic', dm_logic),
@@ -157,6 +170,8 @@ class TMJExtensionWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
                 ('GoldStandardSet.Widget', gs_widget),
                 ('CoarseRegistration.Logic', cr_logic),
                 ('CoarseRegistration.Widget', cr_widget),
+                ('ROIMaskSet.Logic', rm_logic),
+                ('ROIMaskSet.Widget', rm_widget),
             ]
             
             for name, module in modules_to_reload:
@@ -235,6 +250,7 @@ class TMJExtensionLogic(ScriptedLoadableModuleLogic):
         self.dataManagerLogic = DataManagerLogic()
         self.goldStandardLogic = GoldStandardLogic()
         self.coarseRegistrationLogic = CoarseRegistrationLogic()
+        self.roiMaskSetLogic = ROIMaskSetLogic()
 
 
 #
