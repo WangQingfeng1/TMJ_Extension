@@ -41,6 +41,7 @@ class DataManagerWidget:
         # Data Manager 区域
         dataManagerCollapsibleButton = ctk.ctkCollapsibleButton()
         dataManagerCollapsibleButton.text = "Data Manager"
+        dataManagerCollapsibleButton.collapsed = True  # 默认折叠
         self.parent.addWidget(dataManagerCollapsibleButton)
         dataManagerFormLayout = qt.QFormLayout(dataManagerCollapsibleButton)
 

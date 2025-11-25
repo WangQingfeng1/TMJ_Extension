@@ -56,7 +56,7 @@ class GoldStandardWidget:
         # Gold Standard Set 模块
         goldStandardCollapsibleButton = ctk.ctkCollapsibleButton()
         goldStandardCollapsibleButton.text = "Gold Standard Set"
-        goldStandardCollapsibleButton.collapsed = False
+        goldStandardCollapsibleButton.collapsed = True  # 默认折叠
         self.parent.addWidget(goldStandardCollapsibleButton)
         goldStandardFormLayout = qt.QFormLayout(goldStandardCollapsibleButton)
 

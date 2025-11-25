@@ -204,7 +204,7 @@ class TMJExtensionWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         """设置日志区域"""
         logCollapsibleButton = ctk.ctkCollapsibleButton()
         logCollapsibleButton.text = "日志与错误信息"
-        logCollapsibleButton.collapsed = True
+        logCollapsibleButton.collapsed = False  # 默认展开
         self.layout.addWidget(logCollapsibleButton)
         logFormLayout = qt.QVBoxLayout(logCollapsibleButton)
 

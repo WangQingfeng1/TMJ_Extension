@@ -1,10 +1,5 @@
 """
-Coarse Registration Widget -         self.rmsErrorLabel = None
-        self.pointPairsTable = None
-        self.placeFixedButton = None
-        self.placeMovingButton = None
-        self.registerButton = None
-        self.clearPointsButton = NoneUI界面
+Coarse Registration Widget - 粗配准模块的UI界面
 """
 import qt
 import ctk
@@ -50,7 +45,7 @@ class CoarseRegistrationWidget:
         # Coarse Registration 模块
         coarseRegCollapsibleButton = ctk.ctkCollapsibleButton()
         coarseRegCollapsibleButton.text = "Coarse Registration"
-        coarseRegCollapsibleButton.collapsed = False
+        coarseRegCollapsibleButton.collapsed = True  # 默认折叠
         self.parent.addWidget(coarseRegCollapsibleButton)
         coarseRegFormLayout = qt.QFormLayout(coarseRegCollapsibleButton)
 
